@@ -1,0 +1,29 @@
+#cloud-config
+packages:
+  - firewalld
+  - squid
+  - httpd-tools
+
+write_files:
+  - path: /etc/squid/squid.conf
+    content: |
+      auth_param basic program /usr/lib64/squid/basic_ncsa_auth  /etc/squid/passwords
+      auth_param basic realm proxy
+      acl authenticated proxy_auth REQUIRED
+      http_access allow authenticated
+      http_port 3128
+  - path: /etc/cron.daily/update.sh
+    content: |
+      #!/bin/bash
+      /usr/bin/yum -y update
+      systemctl restart squid
+  
+runcmd:
+  - htpasswd -nb {user} {pass} >> /etc/squid/passwords
+  - chmod a+x /etc/cron.daily/update.sh
+  - firewall-offline-cmd --zone=public --add-rich-rule='rule family="ipv4" source address="{myip}" accept'
+  - firewall-offline-cmd --zone=public --add-port=3128/tcp
+  - firewall-offline-cmd --zone=public --remove-service-from-zone=ssh
+  - firewall-offline-cmd --zone=public --add-interface=eth0
+  - systemctl start firewalld squid
+  - systemctl enable firewalld squid

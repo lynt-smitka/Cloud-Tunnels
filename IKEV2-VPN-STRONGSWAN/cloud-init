@@ -1,0 +1,87 @@
+#cloud-config
+packages:
+ - firewalld
+
+write_files:
+  - path: /etc/strongswan/ipsec.conf
+    content: |
+      config setup
+        protostack=netkey
+        nhelpers=0
+
+      conn IKEv2-EAP
+        keyexchange=ikev2
+        leftid=%any
+        leftcert=fullchain.pem
+        leftsubnet=0.0.0.0/0
+        right=%any
+        rightsourceip=10.0.1.0/24
+        rightdns=8.8.8.8
+        dpdaction=clear
+        dpddelay=30s
+        dpdtimeout=1800s
+        fragmentation=yes
+        auto=add
+        rekey=no
+        leftsendcert=always
+        rightauth=eap-mschapv2
+        eap_identity=%identity
+
+
+  - path: /etc/strongswan /ipsec.secrets
+    content: |       
+      : RSA privkey.pem
+      {user} : EAP "{pass}"
+
+  - path: /etc/sysctl.conf
+    content: |
+      net.ipv4.ip_forward = 1
+      net.ipv4.conf.all.rp_filter = 0
+      net.ipv4.conf.default.rp_filter = 0
+      net.ipv4.conf.eth0.rp_filter = 0
+      net.ipv4.conf.all.send_redirects = 0
+      net.ipv4.conf.default.send_redirects = 0
+      net.ipv4.conf.all.accept_redirects = 0
+      net.ipv4.conf.default.accept_redirects = 0
+
+  - path: /etc/cron.daily/update.sh
+    content: |
+      #!/bin/bash
+      /usr/bin/yum -y update
+      /usr/bin/certbot renew -q
+
+  - path: /usr/local/bin/register-le-cert.sh
+    content: |
+      #!/bin/bash
+      MAIL={mail}
+      DOMAIN=
+      if [ -z "$DOMAIN" ]
+      then
+        IP=$(curl -s http://tools.lynt.cz/ip.php?raw)
+        certbot certonly --standalone -n -m $MAIL -d $IP.nip.io --agree-tos
+        ln -s /etc/letsencrypt/live/$IP.nip.io/fullchain.pem /etc/strongswan/ipsec.d/certs/fullchain.pem
+        ln -s /etc/letsencrypt/live/$IP.nip.io/privkey.pem /etc/strongswan/ipsec.d/private/privkey.pem
+      else
+        certbot certonly --standalone -n -m $MAIL -d $DOMAIN --agree-tos
+        ln -s /etc/letsencrypt/live/$DOMAIN/fullchain.pem /etc/strongswan/ipsec.d/certs/fullchain.pem
+        ln -s /etc/letsencrypt/live/$DOMAIN/privkey.pem /etc/strongswan/ipsec.d/private/privkey.pem
+      fi
+
+runcmd:
+  - rpm -i https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+  - yum install certbot strongswan -y
+  - sysctl -p /etc/sysctl.conf
+  - chmod a+x /etc/cron.daily/update.sh
+  - chmod a+x /usr/local/bin/register-le-cert.sh
+  - wget https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem -O /etc/strongswan/ipsec.d/cacerts/lets-encrypt-x3-cross-signed.pem
+  - register-le-cert.sh
+  - firewall-offline-cmd --zone=public --add-rich-rule='rule family="ipv4" source address="{myip}" accept'
+  - firewall-offline-cmd --zone=public --add-port=500/udp
+  - firewall-offline-cmd --zone=public --add-port=4500/udp
+  - firewall-offline-cmd --zone=public --add-port=443/tcp
+  - firewall-offline-cmd --zone=public --add-port=80/tcp
+  - firewall-offline-cmd --zone=public --remove-service-from-zone=ssh
+  - firewall-offline-cmd --zone=public --add-masquerade
+  - firewall-offline-cmd --zone=public --add-interface=eth0
+  - systemctl start strongswan firewalld
+  - systemctl enable strongswan firewalld
