@@ -1,9 +1,13 @@
 #!/bin/bash
+#========YOUR SETTINGS========#
+#fill in your values before running the script!
+
 #Proxy user's credentials
 USER={user}
 PASS={pass}
 #your IP address for SSH access
 MYIP={myip}
+#=======/YOUR SETTINGS========#
 
 #Install firewall, squid and htpasswd
 yum install firewalld squid httpd-tools -y

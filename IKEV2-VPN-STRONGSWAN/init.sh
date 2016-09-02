@@ -1,4 +1,7 @@
 #!/bin/bash
+#========YOUR SETTINGS========#
+#fill in your values before running the script!
+
 #your mail address for Let's Encrypt registration
 MAIL={mail}
 #you can use your own domain name - it must exists and be pointed to the server's ip before launch
@@ -8,6 +11,7 @@ USER={user}
 PASS={pass}
 #your IP address for SSH access
 MYIP={myip}
+#=======/YOUR SETTINGS========#
 
 #RedHat repository (on AWS) doesn't include epel-release package, install it form RPM
 rpm -i https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm

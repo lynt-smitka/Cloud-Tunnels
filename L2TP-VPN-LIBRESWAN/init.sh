@@ -1,4 +1,7 @@
 #!/bin/bash
+#========YOUR SETTINGS========#
+#fill in your values before running the script!
+
 #VPN user's credentials
 USER={user}
 PASS={pass}
@@ -6,6 +9,7 @@ PASS={pass}
 PSK={psk}
 #your IP address for SSH access
 MYIP={myip}
+#=======/YOUR SETTINGS========#
 
 #RedHat repository (on AWS) doesn't include epel-release package, install it form RPM
 rpm -i https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
