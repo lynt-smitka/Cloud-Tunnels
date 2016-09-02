@@ -1,4 +1,5 @@
 #!/bin/bash
+#IKEv2 VPN
 #========YOUR SETTINGS========#
 #fill in your values before running the script!
 
@@ -29,7 +30,7 @@ config setup
 
 conn IKEv2-EAP
   keyexchange=ikev2
-  leftid=%any
+  leftid=
   leftcert=fullchain.pem
   leftsubnet=0.0.0.0/0
   right=%any
@@ -98,10 +99,12 @@ then
   certbot certonly --standalone -n -m $MAIL -d $IP.nip.io --agree-tos
   ln -s /etc/letsencrypt/live/$IP.nip.io/fullchain.pem /etc/strongswan/ipsec.d/certs/fullchain.pem
   ln -s /etc/letsencrypt/live/$IP.nip.io/privkey.pem /etc/strongswan/ipsec.d/private/privkey.pem
+  sed -i "s/leftid=.*/leftid=$IP.nip.io/g" /etc/strongswan/ipsec.conf
 else
   certbot certonly --standalone -n -m $MAIL -d $DOMAIN --agree-tos
   ln -s /etc/letsencrypt/live/$DOMAIN/fullchain.pem /etc/strongswan/ipsec.d/certs/fullchain.pem
   ln -s /etc/letsencrypt/live/$DOMAIN/privkey.pem /etc/strongswan/ipsec.d/private/privkey.pem
+  sed -i "s/leftid=.*/leftid=$DOMAIN/g" /etc/strongswan/ipsec.conf
 fi
 
 #download CA and start strongswan
