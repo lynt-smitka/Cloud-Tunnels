@@ -65,10 +65,7 @@ ms-dns 8.8.8.8
 ms-dns 8.8.4.4
 asyncmap 0
 auth
-crtscts
-lock
 hide-password
-modem
 name l2tpd
 proxyarp
 lcp-echo-interval 30
@@ -114,11 +111,14 @@ chmod a+x /etc/cron.daily/update.sh
 #firewall rules
 systemctl stop firewalld
 
+#allow access from your IP and from VPN
 firewall-offline-cmd --zone=public --add-rich-rule="rule family=ipv4 source address=$MYIP accept"
+firewall-offline-cmd --zone=public --add-rich-rule="rule family=ipv4 source address=10.0.1.0/24 accept"
+
 firewall-offline-cmd --zone=public --add-port=500/udp
 firewall-offline-cmd --zone=public --add-port=4500/udp
 firewall-offline-cmd --zone=public --add-port=1701/udp
-firewall-offline-cmd --zone=public --remove-service-from-zone=ssh
+firewall-offline-cmd --remove-service=ssh
 firewall-offline-cmd --zone=public --add-masquerade
 firewall-offline-cmd --zone=public --add-interface=eth0
 

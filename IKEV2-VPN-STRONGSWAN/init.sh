@@ -79,12 +79,15 @@ chmod a+x /etc/cron.daily/update.sh
 #firewall rules
 systemctl stop firewalld
 
+#allow access from your IP and from VPN
 firewall-offline-cmd --zone=public --add-rich-rule="rule family=ipv4 source address=$MYIP accept"
+firewall-offline-cmd --zone=public --add-rich-rule="rule family=ipv4 source address=10.0.1.0/24 accept"
+
 firewall-offline-cmd --zone=public --add-port=500/udp
 firewall-offline-cmd --zone=public --add-port=4500/udp
 firewall-offline-cmd --zone=public --add-port=443/tcp
 firewall-offline-cmd --zone=public --add-port=80/tcp
-firewall-offline-cmd --zone=public --remove-service-from-zone=ssh
+firewall-offline-cmd --remove-service=ssh
 firewall-offline-cmd --zone=public --add-masquerade
 firewall-offline-cmd --zone=public --add-interface=eth0
 
