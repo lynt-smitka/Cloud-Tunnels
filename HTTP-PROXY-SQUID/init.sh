@@ -40,7 +40,7 @@ systemctl stop firewalld
 
 firewall-offline-cmd --zone=public --add-rich-rule="rule family=ipv4 source address=$MYIP accept"
 firewall-offline-cmd --zone=public --add-port=3128/tcp
-firewall-offline-cmd --zone=public --remove-service-from-zone=ssh
+firewall-offline-cmd --remove-service=ssh
 firewall-offline-cmd --zone=public --add-interface=eth0
 
 systemctl start firewalld squid

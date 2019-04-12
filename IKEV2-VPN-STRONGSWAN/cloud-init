@@ -5,10 +5,6 @@ packages:
 write_files:
   - path: /etc/strongswan/ipsec.conf
     content: |
-      config setup
-        protostack=netkey
-        nhelpers=0
-
       conn IKEv2-EAP
         keyexchange=ikev2
         leftid=%any
@@ -26,9 +22,12 @@ write_files:
         leftsendcert=always
         rightauth=eap-mschapv2
         eap_identity=%identity
+        ike=aes128-sha256-ecp256,aes256-sha384-ecp384,aes128-sha256-modp2048,aes128-sha1-modp2048,aes256-sha384-modp4096,aes256-sha256-modp4096,aes256-sha1-modp4096,aes128-sha256-modp1536,aes128-sha1-modp1536,aes256-sha384-modp2048,aes256-sha256-modp2048,aes256-sha1-modp2048,aes128-sha256-modp1024,aes128-sha1-modp1024,aes256-sha384-modp1536,aes256-sha256-modp1536,aes256-sha1-modp1536,aes256-sha384-modp1024,aes256-sha256-modp1024,aes256-sha1-modp1024!
+        esp=aes128gcm16-ecp256,aes256gcm16-ecp384,aes128-sha256-ecp256,aes256-sha384-ecp384,aes128-sha256-modp2048,aes128-sha1-modp2048,aes256-sha384-modp4096,aes256-sha256-modp4096,aes256-sha1-modp4096,aes128-sha256-modp1536,aes128-sha1-modp1536,aes256-sha384-modp2048,aes256-sha256-modp2048,aes256-sha1-modp2048,aes128-sha256-modp1024,aes128-sha1-modp1024,aes256-sha384-modp1536,aes256-sha256-modp1536,aes256-sha1-modp1536,aes256-sha384-modp1024,aes256-sha256-modp1024,aes256-sha1-modp1024,aes128gcm16,aes256gcm16,aes128-sha256,aes128-sha1,aes256-sha384,aes256-sha256,aes256-sha1!
 
 
-  - path: /etc/strongswan /ipsec.secrets
+
+  - path: /etc/strongswan/ipsec.secrets
     content: |       
       : RSA privkey.pem
       {user} : EAP "{pass}"
@@ -61,15 +60,18 @@ write_files:
         certbot certonly --standalone -n -m $MAIL -d $IP.nip.io --agree-tos
         ln -s /etc/letsencrypt/live/$IP.nip.io/fullchain.pem /etc/strongswan/ipsec.d/certs/fullchain.pem
         ln -s /etc/letsencrypt/live/$IP.nip.io/privkey.pem /etc/strongswan/ipsec.d/private/privkey.pem
+        sed -i "s/leftid=.*/leftid=$IP.nip.io/g" /etc/strongswan/ipsec.conf
+
       else
         certbot certonly --standalone -n -m $MAIL -d $DOMAIN --agree-tos
         ln -s /etc/letsencrypt/live/$DOMAIN/fullchain.pem /etc/strongswan/ipsec.d/certs/fullchain.pem
         ln -s /etc/letsencrypt/live/$DOMAIN/privkey.pem /etc/strongswan/ipsec.d/private/privkey.pem
+        sed -i "s/leftid=.*/leftid=$DOMAIN/g" /etc/strongswan/ipsec.conf
       fi
 
 runcmd:
   - rpm -i https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-  - yum install certbot strongswan -y
+  - yum install wget certbot strongswan -y
   - sysctl -p /etc/sysctl.conf
   - chmod a+x /etc/cron.daily/update.sh
   - chmod a+x /usr/local/bin/register-le-cert.sh

@@ -108,6 +108,17 @@ EOF
 
 chmod a+x /etc/cron.daily/update.sh
 
+#missing l2tp_ppp module fix
+cat <<EOF > /usr/local/bin/l2tp_ppp_fix.sh
+#!/bin/bash
+if ! modprobe -q l2tp_ppp; then
+  sed -i '/^ExecStartPre/s/^/#/' /usr/lib/systemd/system/xl2tpd.service
+  systemctl daemon-reload
+fi
+EOF
+
+
+
 #firewall rules
 systemctl stop firewalld
 
@@ -121,6 +132,8 @@ firewall-offline-cmd --zone=public --add-port=1701/udp
 firewall-offline-cmd --remove-service=ssh
 firewall-offline-cmd --zone=public --add-masquerade
 firewall-offline-cmd --zone=public --add-interface=eth0
+
+sh /usr/local/bin/l2tp_ppp_fix.sh
 
 systemctl start xl2tpd ipsec firewalld
 systemctl enable xl2tpd ipsec firewalld

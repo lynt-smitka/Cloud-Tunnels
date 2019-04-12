@@ -83,6 +83,15 @@ write_files:
     content: |
       #!/bin/bash
       /usr/bin/yum -y update
+      
+  - path: /usr/local/bin/l2tp_ppp_fix.sh
+    content: |
+      #!/bin/bash
+      if ! modprobe -q l2tp_ppp; then
+        sed -i '/^ExecStartPre/s/^/#/' /usr/lib/systemd/system/xl2tpd.service
+        systemctl daemon-reload
+      fi
+
 
 runcmd:
   - rpm -i https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
@@ -97,5 +106,6 @@ runcmd:
   - firewall-offline-cmd --remove-service=ssh
   - firewall-offline-cmd --zone=public --add-masquerade
   - firewall-offline-cmd --zone=public --add-interface=eth0
+  - sh /usr/local/bin/l2tp_ppp_fix.sh
   - systemctl start xl2tpd ipsec firewalld
   - systemctl enable xl2tpd ipsec firewalld
