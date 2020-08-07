@@ -1,4 +1,5 @@
 #!/bin/bash
+#L2TP VPN
 #========YOUR SETTINGS========#
 #fill in your values before running the script!
 
@@ -15,23 +16,18 @@ MYIP={myip}
 RELEASE=$(rpm -E %{rhel}) && rpm -i https://dl.fedoraproject.org/pub/epel/epel-release-latest-$RELEASE.noarch.rpm
 
 #Install firewall, let's encrypt certbot and strongswan
-yum install firewalld libreswan ppp xl2tpd -y
+yum install firewalld strongswan ppp xl2tpd -y
 
 #config files
 
 #ipsec config
-cat <<EOF > /etc/ipsec.conf
-config setup
-  protostack=netkey
-  nhelpers=0
-
-conn l2tp-psk
+cat <<EOF > /etc/strongswan/ipsec.conf
+conn l2tp-ikev1-psk
   authby=secret
   auto=add
   dpdaction=clear
   dpddelay=30
   dpdtimeout=120
-  ikev2=no
   keyingtries=5
   left=%defaultroute
   leftid=%myid
@@ -77,8 +73,8 @@ connect-delay 5000
 EOF
 
 #secrets
-cat <<EOF > /etc/ipsec.secrets
-%any %any: PSK "$PSK"
+cat <<EOF > /etc/strongswan/ipsec.secrets
+: PSK "$PSK"
 EOF
 
 cat <<EOF > /etc/ppp/chap-secrets
@@ -125,7 +121,7 @@ systemctl stop firewalld
 
 #allow access from your IP and from VPN
 firewall-offline-cmd --zone=public --add-rich-rule="rule family=ipv4 source address=$MYIP accept"
-firewall-offline-cmd --zone=public --add-rich-rule="rule family=ipv4 source address=10.0.1.0/24 accept"
+firewall-offline-cmd --zone=public --add-rich-rule="rule family=ipv4 source address=10.0.1.0/24 accept"  
 firewall-offline-cmd --zone=public --add-port=500/udp
 firewall-offline-cmd --zone=public --add-port=4500/udp
 firewall-offline-cmd --remove-service=ssh
@@ -134,6 +130,6 @@ firewall-offline-cmd --zone=public --add-interface=eth0
 
 sh /usr/local/bin/l2tp_ppp_fix.sh
 
-systemctl start xl2tpd ipsec firewalld
-systemctl enable xl2tpd ipsec firewalld
+systemctl start xl2tpd strongswan firewalld
+systemctl enable xl2tpd strongswan firewalld
  

@@ -1,23 +1,16 @@
 #cloud-config
 packages:
- - libreswan
  - firewalld
- - ppp
 
 write_files:
-  - path: /etc/ipsec.conf
+  - path: /etc/strongswan/ipsec.conf
     content: |
-      config setup
-        protostack=netkey
-        nhelpers=0
-      
-      conn l2tp-psk
+      conn l2tp-ikev1-psk
         authby=secret
         auto=add
         dpdaction=clear
         dpddelay=30
         dpdtimeout=120
-        ikev2=no
         keyingtries=5
         left=%defaultroute
         leftid=%myid
@@ -28,10 +21,10 @@ write_files:
         rightprotoport=17/%any
         rightsubnet=vhost:%priv
         type=transport
-
-  - path: /etc/ipsec.secrets
+      
+  - path: /etc/strongswan/ipsec.secrets
     content: |        
-      %any %any: PSK "{PSK}"
+      : PSK "{PSK}"
 
   - path: /etc/xl2tpd/xl2tpd.conf
     content: |        
@@ -96,7 +89,7 @@ write_files:
 
 runcmd:
   - RELEASE=$(rpm -E %{rhel}) && rpm -i https://dl.fedoraproject.org/pub/epel/epel-release-latest-$RELEASE.noarch.rpm
-  - yum install xl2tpd -y
+  - yum install xl2tpd strongswan -y
   - sysctl -p /etc/sysctl.conf
   - chmod a+x /etc/cron.daily/update.sh
   - firewall-offline-cmd --zone=public --add-rich-rule='rule family="ipv4" source address="{myip}" accept'
@@ -107,5 +100,5 @@ runcmd:
   - firewall-offline-cmd --zone=public --add-masquerade
   - firewall-offline-cmd --zone=public --add-interface=eth0
   - sh /usr/local/bin/l2tp_ppp_fix.sh
-  - systemctl start xl2tpd ipsec firewalld
-  - systemctl enable xl2tpd ipsec firewalld
+  - systemctl start xl2tpd strongswan firewalld
+  - systemctl enable xl2tpd strongswan firewalld

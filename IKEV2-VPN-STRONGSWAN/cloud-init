@@ -70,7 +70,7 @@ write_files:
       fi
 
 runcmd:
-  - rpm -i https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+  - RELEASE=$(rpm -E %{rhel}) && rpm -i https://dl.fedoraproject.org/pub/epel/epel-release-latest-$RELEASE.noarch.rpm
   - yum install wget certbot strongswan -y
   - sysctl -p /etc/sysctl.conf
   - chmod a+x /etc/cron.daily/update.sh
